@@ -87,7 +87,7 @@ public class ConstantPropagation extends
         } else if (v1.isUndef() || v2.isUndef()) {
             return v1.isUndef() ? v2 : v1;
         } else if (v1.isConstant() && v2.isConstant()) {
-            if (v1 == v2) {
+            if (v1.getConstant() == v2.getConstant()) {
                 return Value.makeConstant(v1.getConstant());
             } else {
                 return Value.getNAC();
@@ -106,13 +106,17 @@ public class ConstantPropagation extends
                 LValue lval = ds.getDef().get();
                 if (lval instanceof Var) {
                     Var var = (Var)lval;
-                    RValue rval = ds.getRValue();
-                    if (rval instanceof Exp) {
-                        Exp e = (Exp)rval;
-                        // var 为 y 时，in 不应该为空 （meet 出了问题？）
-                        Value val = evaluate(e, newIn);
-                        // 这里的 update 已经有 (IN[s] – {(x, _)} 中 kill 的含义
-                        newIn.update(var, val);
+                    if (canHoldInt(var)) {
+                        RValue rval = ds.getRValue();
+                        if (rval instanceof Exp) {
+                            Exp e = (Exp)rval;
+                            // var 为 y 时，in 不应该为空 （meet 出了问题？）
+                            Value val = evaluate(e, newIn);
+                            // 这里的 update 已经有 (IN[s] – {(x, _)} 中 kill 的含义
+                            newIn.update(var, val);
+                        } else {
+                            newIn.update(var, Value.getNAC());
+                        }
                     }
                 }
             }
@@ -245,9 +249,9 @@ public class ConstantPropagation extends
                         }
                     }
                 }
-            } else {
-                return Value.getUndef();
             }
+
+            return Value.getUndef();
         }
 
         return Value.getNAC();
