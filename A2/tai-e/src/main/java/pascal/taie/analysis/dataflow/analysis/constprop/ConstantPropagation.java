@@ -55,8 +55,10 @@ public class ConstantPropagation extends
         // 除了参数，其他都是 undef
         CPFact fact = new CPFact();
         for (Var var : cfg.getIR().getParams()) {
-            // 参数未知，保守 NAC
-            fact.update(var, Value.getNAC());
+            if (canHoldInt(var)) {
+                // 参数未知，保守 NAC
+                fact.update(var, Value.getNAC());
+            }
         }
         return fact;
     }
